@@ -12,11 +12,13 @@ import com.almende.dht.Bucket;
 import com.almende.dht.Constants;
 import com.almende.dht.Key;
 import com.almende.dht.Node;
+import com.almende.dht.RoutingTable;
 
 /**
  * The Class TestRpc.
  */
 public class TestDht extends TestCase {
+	final static URI TESTURI = URI.create("http://localhost:1");
 
 	@Test
 	public void testKeys() {
@@ -158,8 +160,7 @@ public class TestDht extends TestCase {
 	@Test
 	public void testBuckets() {
 		Bucket bucket = new Bucket();
-		URI testUri = URI.create("http://localhost:1");
-		final Node test = new Node(Key.random(), testUri);
+		final Node test = new Node(Key.random(), TESTURI);
 		bucket.seenNode(test);
 		assertEquals("getClosestNodes didn't return node", 1,
 				bucket.getClosestNodes(new Key()).length);
@@ -167,14 +168,14 @@ public class TestDht extends TestCase {
 				bucket.getClosestNodes(new Key())[0]);
 
 		bucket = new Bucket();
-		final Node test1 = new Node(Key.fromHexString("01"), testUri);
-		final Node test2 = new Node(Key.fromHexString("02"), testUri);
-		final Node test3 = new Node(Key.fromHexString("03"), testUri);
-		final Node test4 = new Node(Key.fromHexString("04"), testUri);
-		final Node test5 = new Node(Key.fromHexString("05"), testUri);
-		final Node test6 = new Node(Key.fromHexString("06"), testUri);
-		final Node test7 = new Node(Key.fromHexString("07"), testUri);
-		final Node test8 = new Node(Key.fromHexString("08"), testUri);
+		final Node test1 = new Node(Key.fromHexString("01"), TESTURI);
+		final Node test2 = new Node(Key.fromHexString("02"), TESTURI);
+		final Node test3 = new Node(Key.fromHexString("03"), TESTURI);
+		final Node test4 = new Node(Key.fromHexString("04"), TESTURI);
+		final Node test5 = new Node(Key.fromHexString("05"), TESTURI);
+		final Node test6 = new Node(Key.fromHexString("06"), TESTURI);
+		final Node test7 = new Node(Key.fromHexString("07"), TESTURI);
+		final Node test8 = new Node(Key.fromHexString("08"), TESTURI);
 		bucket.seenNode(test1);
 		bucket.seenNode(test2);
 		bucket.seenNode(test3);
@@ -217,4 +218,20 @@ public class TestDht extends TestCase {
 						test1.getKey(), test3.getKey(), test5.getKey() })[2]);
 	}
 
+	@Test
+	public void testTable() {
+		final RoutingTable rt = new RoutingTable(Key.fromHexString("04"));
+		rt.seenNode(new Node(Key.fromHexString("05"), TESTURI));
+		rt.seenNode(new Node(Key.fromHexString("09"), TESTURI));
+		rt.seenNode(new Node(Key.fromHexString("0D"), TESTURI));
+		rt.seenNode(new Node(Key.fromHexString("01"), TESTURI));
+
+		final Bucket bucket = rt.getBucket(Key.fromHexString("0C"));
+		assertEquals("Wrong node in bucket 1", Key.fromHexString("0D"),
+				bucket.getClosestNodes(Key.fromHexString("0F"), 1)[0].getKey());
+
+		assertEquals("Wrong result length 1",3,rt.getClosestNodes(Key.fromHexString("0F"), 3).length);
+		assertEquals("Wrong result length 2",2,rt.getClosestNodes(Key.fromHexString("0F"), 2).length);
+		assertEquals("Wrong result length 3",4,rt.getClosestNodes(Key.fromHexString("05"), 10).length);
+	}
 }
