@@ -1,4 +1,4 @@
-package dht;
+package com.almende.test.dht;
 
 import java.io.IOException;
 import java.net.URI;
