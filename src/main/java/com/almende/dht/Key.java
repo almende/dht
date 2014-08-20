@@ -1,3 +1,7 @@
+/*
+ * Copyright: Almende B.V. (2014), Rotterdam, The Netherlands
+ * License: The Apache Software License, Version 2.0
+ */
 package com.almende.dht;
 
 import java.io.UnsupportedEncodingException;
@@ -7,22 +11,45 @@ import java.util.BitSet;
 import java.util.Random;
 import java.util.logging.Logger;
 
+/**
+ * The Class Key.
+ */
 public final class Key implements Comparable<Key>{
 	private static final Logger LOG = Logger.getLogger(Key.class.getName());
 	private BitSet val;
 
+	/**
+	 * Instantiates a new key.
+	 *
+	 * @param val
+	 *            the val
+	 */
 	public Key(final BitSet val) {
 		this.val = val;
 	}
 	
+	/**
+	 * Instantiates a new key.
+	 */
 	public Key(){
 		this.val = new BitSet(Constants.BITLENGTH);
 	}
 	
+	/**
+	 * Instantiates a new key.
+	 *
+	 * @param key
+	 *            the key
+	 */
 	public Key(final String key){
 		this.val = BitSet.valueOf(hexToBytes(key));
 	}
 	
+	/**
+	 * Random.
+	 *
+	 * @return the key
+	 */
 	public static Key random(){
 		final BitSet set = new BitSet(Constants.BITLENGTH);
 		final Random rand = new Random();
@@ -31,6 +58,14 @@ public final class Key implements Comparable<Key>{
 		}
 		return new Key(set);
 	}
+	
+	/**
+	 * Digest.
+	 *
+	 * @param val
+	 *            the val
+	 * @return the key
+	 */
 	public static Key digest(final String val){
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA1");
@@ -43,36 +78,80 @@ public final class Key implements Comparable<Key>{
 		return null;
 	}
 
+	/**
+	 * From hex string.
+	 *
+	 * @param val
+	 *            the val
+	 * @return the key
+	 */
 	public static Key fromHexString(final String val){
 		return new Key(val);
 	}
+	
+	/**
+	 * From string.
+	 *
+	 * @param val
+	 *            the val
+	 * @return the key
+	 */
 	public static Key fromString(final String val){
 		return Key.digest(val);
 	}
 	
+	/**
+	 * Gets the val.
+	 *
+	 * @return the val
+	 */
 	public BitSet getVal() {
 		return val;
 	}
 
+	/**
+	 * Sets the val.
+	 *
+	 * @param val
+	 *            the new val
+	 */
 	public void setVal(BitSet val) {
 		this.val = val;
 	}
 
+	/**
+	 * Rank.
+	 *
+	 * @return the int
+	 */
 	public int rank(){
 		return val.length();
 	}
 
+	/**
+	 * Dist.
+	 *
+	 * @param o
+	 *            the o
+	 * @return the key
+	 */
 	public Key dist(final Key o) {
 		final BitSet res = ((BitSet)val.clone());
 		res.xor(o.val);
 		return new Key(res);
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
 	@Override
 	public int hashCode() {
 		return val.hashCode();
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(final Object o) {
 		if (o == null) {
@@ -86,6 +165,9 @@ public final class Key implements Comparable<Key>{
 		return (val.equals(other.val));
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return bytesToHex(val.toByteArray());
@@ -113,6 +195,9 @@ public final class Key implements Comparable<Key>{
 	    return data;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
 	@Override
 	public int compareTo(Key o) {
 		if (this.equals(o)) return 0;

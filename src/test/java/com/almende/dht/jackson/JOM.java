@@ -34,6 +34,9 @@ public final class JOM {
 		MAPPER = createInstance();
 	}
 
+	/**
+	 * Instantiates a new jom.
+	 */
 	protected JOM() {
 	}
 
@@ -136,12 +139,21 @@ public final class JOM {
 		return MAPPER.getTypeFactory().uncheckedSimpleType(c);
 	}
 
+	/**
+	 * The Class CustomBitSetSerializer.
+	 */
 	public class CustomBitSetSerializer extends StdSerializer<BitSet> {
 
+		/**
+		 * Instantiates a new custom bit set serializer.
+		 */
 		public CustomBitSetSerializer() {
 			super(BitSet.class, true);
 		}
 
+		/* (non-Javadoc)
+		 * @see com.fasterxml.jackson.databind.ser.std.StdSerializer#serialize(java.lang.Object, com.fasterxml.jackson.core.JsonGenerator, com.fasterxml.jackson.databind.SerializerProvider)
+		 */
 		@Override
 		public void serialize(BitSet value, JsonGenerator jgen,
 				SerializerProvider provider) throws IOException,
@@ -154,13 +166,22 @@ public final class JOM {
 
 	}
 
+	/**
+	 * The Class CustomBitSetDeserializer.
+	 */
 	public class CustomBitSetDeserializer extends StdDeserializer<BitSet> {
 		private static final long serialVersionUID = 8734051359812526123L;
 
+		/**
+		 * Instantiates a new custom bit set deserializer.
+		 */
 		public CustomBitSetDeserializer() {
 			super(BitSet.class);
 		}
 
+		/* (non-Javadoc)
+		 * @see com.fasterxml.jackson.databind.JsonDeserializer#deserialize(com.fasterxml.jackson.core.JsonParser, com.fasterxml.jackson.databind.DeserializationContext)
+		 */
 		@Override
 		public BitSet deserialize(JsonParser jpar, DeserializationContext ctx)
 				throws IOException, JsonProcessingException {

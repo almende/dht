@@ -1,3 +1,7 @@
+/*
+ * Copyright: Almende B.V. (2014), Rotterdam, The Netherlands
+ * License: The Apache Software License, Version 2.0
+ */
 package com.almende.test.dht;
 
 import java.io.IOException;
@@ -22,6 +26,9 @@ import com.almende.dht.jackson.JOM;
 public class TestDht extends TestCase {
 	final static URI TESTURI = URI.create("http://localhost:1");
 
+	/**
+	 * Test keys.
+	 */
 	@Test
 	public void testKeys() {
 		final Key myKey = new Key(BitSet.valueOf(new long[] { 1029287173,
@@ -158,6 +165,9 @@ public class TestDht extends TestCase {
 				Key.fromHexString("01"));
 	}
 
+	/**
+	 * Test buckets.
+	 */
 	@Test
 	public void testBuckets() {
 		Bucket bucket = new Bucket();
@@ -219,6 +229,12 @@ public class TestDht extends TestCase {
 						test1.getKey(), test3.getKey(), test5.getKey() })[2]);
 	}
 
+	/**
+	 * Test table.
+	 *
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
 	@Test
 	public void testTable() throws IOException {
 		final RoutingTable rt = new RoutingTable(Key.fromHexString("04"));

@@ -1,3 +1,7 @@
+/*
+ * Copyright: Almende B.V. (2014), Rotterdam, The Netherlands
+ * License: The Apache Software License, Version 2.0
+ */
 package com.almende.dht;
 
 import java.util.Arrays;
@@ -12,15 +16,27 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * The Class Bucket.
+ */
 public class Bucket {
 	private static final Logger LOG = Logger.getLogger(Bucket.class.getName());
 
 	private LinkedHashMap<Key, Node> nodes;
 
+	/**
+	 * Instantiates a new bucket.
+	 */
 	public Bucket() {
 		nodes = new LinkedHashMap<Key, Node>(Constants.K);
 	};
 
+	/**
+	 * Seen node.
+	 *
+	 * @param node
+	 *            the node
+	 */
 	public void seenNode(final Node node) {
 		synchronized (nodes) {
 			if (nodes.containsKey(node.getKey())) {
@@ -38,6 +54,17 @@ public class Bucket {
 		}
 	}
 
+	/**
+	 * Gets the closest nodes.
+	 *
+	 * @param near
+	 *            the near
+	 * @param limit
+	 *            the limit
+	 * @param filter
+	 *            the filter
+	 * @return the closest nodes
+	 */
 	public Node[] getClosestNodes(final Key near, final int limit,
 			final Set<Key> filter) {
 		synchronized (nodes) {
@@ -55,6 +82,17 @@ public class Bucket {
 		}
 	}
 
+	/**
+	 * Gets the closest nodes.
+	 *
+	 * @param near
+	 *            the near
+	 * @param limit
+	 *            the limit
+	 * @param filter
+	 *            the filter
+	 * @return the closest nodes
+	 */
 	public Node[] getClosestNodes(final Key near, final int limit,
 			final Key[] filter) {
 		final Set<Key> set = new HashSet<Key>(filter.length);
@@ -62,19 +100,46 @@ public class Bucket {
 		return getClosestNodes(near, limit, set);
 	}
 
+	/**
+	 * Gets the closest nodes.
+	 *
+	 * @param near
+	 *            the near
+	 * @param limit
+	 *            the limit
+	 * @return the closest nodes
+	 */
 	public Node[] getClosestNodes(final Key near, final int limit) {
 		return getClosestNodes(near, limit, Collections.<Key> emptySet());
 	}
 
+	/**
+	 * Gets the closest nodes.
+	 *
+	 * @param near
+	 *            the near
+	 * @return the closest nodes
+	 */
 	public Node[] getClosestNodes(final Key near) {
 		return getClosestNodes(near, Integer.MAX_VALUE,
 				Collections.<Key> emptySet());
 	}
 
+	/**
+	 * Gets the nodes.
+	 *
+	 * @return the nodes
+	 */
 	public LinkedHashMap<Key, Node> getNodes() {
 		return nodes;
 	}
 
+	/**
+	 * Sets the nodes.
+	 *
+	 * @param nodes
+	 *            the nodes
+	 */
 	public void setNodes(LinkedHashMap<Key, Node> nodes) {
 		this.nodes = nodes;
 	}
