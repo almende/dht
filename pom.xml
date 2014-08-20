@@ -44,6 +44,7 @@
 		<maven-source-plugin.version>2.2.1</maven-source-plugin.version>
 		<junit.version>4.11</junit.version>
 		<java.version>1.7</java.version>
+		<jackson.version>2.4.1</jackson.version>
 	</properties>
 
 	<dependencies>
@@ -51,6 +52,12 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

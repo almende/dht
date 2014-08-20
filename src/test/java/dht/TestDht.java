@@ -1,5 +1,6 @@
 package dht;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -13,6 +14,7 @@ import com.almende.dht.Constants;
 import com.almende.dht.Key;
 import com.almende.dht.Node;
 import com.almende.dht.RoutingTable;
+import com.almende.dht.jackson.JOM;
 
 /**
  * The Class TestRpc.
@@ -135,13 +137,12 @@ public class TestDht extends TestCase {
 				Arrays.toString(arr1));
 
 		// Check SHA1 keying:
-		assertEquals("Empty string sha1 key incorrect", new Key("").toString(),
-				"DA39A3EE5E6B4B0D3255BFEF95601890AFD80709");
-		assertEquals("Teststring1 sha1 key incorrect",
-				new Key("abc").toString(),
-				"A9993E364706816ABA3E25717850C26C9CD0D89D");
-		assertEquals("Teststring2 sha1 key incorrect", new Key(
-				"abcdefghijklmnopqrstuvwxyz").toString(),
+		assertEquals("Empty string sha1 key incorrect", Key.digest("")
+				.toString(), "DA39A3EE5E6B4B0D3255BFEF95601890AFD80709");
+		assertEquals("Teststring1 sha1 key incorrect", Key.digest("abc")
+				.toString(), "A9993E364706816ABA3E25717850C26C9CD0D89D");
+		assertEquals("Teststring2 sha1 key incorrect",
+				Key.digest("abcdefghijklmnopqrstuvwxyz").toString(),
 				"32D10C7B8CF96570CA04CE37F2A19D84240D3A89");
 
 		// Check syntax sugar:
@@ -150,7 +151,7 @@ public class TestDht extends TestCase {
 				Key.fromHexString("A9993E364706816ABA3E25717850C26C9CD0D89D"));
 		assertEquals(
 				"From HexString results in incorrect key (empty string key)",
-				new Key(""),
+				Key.digest(""),
 				Key.fromHexString("DA39A3EE5E6B4B0D3255BFEF95601890AFD80709"));
 		assertEquals("From HexString doesn't create 1-key",
 				new Key(BitSet.valueOf(new long[] { 1 })),
@@ -219,7 +220,7 @@ public class TestDht extends TestCase {
 	}
 
 	@Test
-	public void testTable() {
+	public void testTable() throws IOException {
 		final RoutingTable rt = new RoutingTable(Key.fromHexString("04"));
 		rt.seenNode(new Node(Key.fromHexString("05"), TESTURI));
 		rt.seenNode(new Node(Key.fromHexString("09"), TESTURI));
@@ -230,8 +231,34 @@ public class TestDht extends TestCase {
 		assertEquals("Wrong node in bucket 1", Key.fromHexString("0D"),
 				bucket.getClosestNodes(Key.fromHexString("0F"), 1)[0].getKey());
 
-		assertEquals("Wrong result length 1",3,rt.getClosestNodes(Key.fromHexString("0F"), 3).length);
-		assertEquals("Wrong result length 2",2,rt.getClosestNodes(Key.fromHexString("0F"), 2).length);
-		assertEquals("Wrong result length 3",4,rt.getClosestNodes(Key.fromHexString("05"), 10).length);
+		assertEquals("Wrong result length 1", 3,
+				rt.getClosestNodes(Key.fromHexString("0F"), 3).length);
+		assertEquals("Wrong result length 2", 2,
+				rt.getClosestNodes(Key.fromHexString("0F"), 2).length);
+		assertEquals("Wrong result length 3", 4,
+				rt.getClosestNodes(Key.fromHexString("05"), 10).length);
+
+		// Test serialization to JSON:
+		final String json = JOM.getInstance().writeValueAsString(rt);
+		final RoutingTable rt2 = JOM.getInstance().readValue(json,
+				RoutingTable.class);
+
+		assertEquals("Routing table key incorrect", Key.fromHexString("04"),
+				rt2.getMyKey());
+
+		final String json2 = JOM.getInstance().writeValueAsString(rt2);
+		assertEquals("json different", json, json2);
+
+		final Bucket bucket2 = rt2.getBucket(Key.fromHexString("0C"));
+		assertEquals("Wrong node in bucket 2", Key.fromHexString("0D"),
+				bucket2.getClosestNodes(Key.fromHexString("0F"), 1)[0].getKey());
+
+		assertEquals("Wrong result length 4", 3,
+				rt2.getClosestNodes(Key.fromHexString("0F"), 3).length);
+		assertEquals("Wrong result length 5", 2,
+				rt2.getClosestNodes(Key.fromHexString("0F"), 2).length);
+		assertEquals("Wrong result length 6", 4,
+				rt2.getClosestNodes(Key.fromHexString("05"), 10).length);
+
 	}
 }

@@ -20,14 +20,7 @@ public final class Key implements Comparable<Key>{
 	}
 	
 	public Key(final String key){
-		try {
-			MessageDigest md = MessageDigest.getInstance("SHA1");
-			this.val = BitSet.valueOf(md.digest(key.getBytes("UTF-8")));
-		} catch (NoSuchAlgorithmException e) {
-			LOG.severe("SHA1 unknown???!");
-		} catch (UnsupportedEncodingException e) {
-			LOG.severe("UTF-8 unknown???!");
-		}	
+		this.val = BitSet.valueOf(hexToBytes(key));
 	}
 	
 	public static Key random(){
@@ -38,13 +31,25 @@ public final class Key implements Comparable<Key>{
 		}
 		return new Key(set);
 	}
-	public static Key fromString(final String val){
-		return new Key(val);
-	}
-	public static Key fromHexString(final String val){
-		return new Key(BitSet.valueOf(hexToBytes(val)));
+	public static Key digest(final String val){
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA1");
+			return new Key(BitSet.valueOf(md.digest(val.getBytes("UTF-8"))));
+		} catch (NoSuchAlgorithmException e) {
+			LOG.severe("SHA1 unknown???!");
+		} catch (UnsupportedEncodingException e) {
+			LOG.severe("UTF-8 unknown???!");
+		}	
+		return null;
 	}
 
+	public static Key fromHexString(final String val){
+		return new Key(val);
+	}
+	public static Key fromString(final String val){
+		return Key.digest(val);
+	}
+	
 	public BitSet getVal() {
 		return val;
 	}

@@ -6,8 +6,11 @@ import java.util.Set;
 
 public class RoutingTable {
 
-	private final Key myKey;
+	private Key myKey;
 	private Bucket[] table = new Bucket[Constants.BITLENGTH];
+
+	public RoutingTable() {
+	}
 
 	public RoutingTable(final Key key) {
 		this.myKey = key;
@@ -41,8 +44,8 @@ public class RoutingTable {
 		Node[] result = bucket.getClosestNodes(near, limit, filter);
 		int offset = -1;
 		boolean[] edges = new boolean[2];
-		edges[0]=false;
-		edges[1]=false;
+		edges[0] = false;
+		edges[1] = false;
 		while (result.length < limit && !(edges[0] && edges[1])) {
 			bucket = getBucket(near, offset);
 			if (bucket != null) {
@@ -59,10 +62,10 @@ public class RoutingTable {
 					}
 				}
 			} else {
-				if (offset<0){
-					edges[0]=true;
+				if (offset < 0) {
+					edges[0] = true;
 				} else {
-					edges[1]=true;
+					edges[1] = true;
 				}
 			}
 			offset = offset < 0 ? -offset + 1 : -offset;
@@ -84,5 +87,21 @@ public class RoutingTable {
 	public Node[] getClosestNodes(final Key near) {
 		return getClosestNodes(near, Integer.MAX_VALUE,
 				Collections.<Key> emptySet());
+	}
+
+	public Bucket[] getTable() {
+		return table;
+	}
+
+	public void setTable(Bucket[] table) {
+		this.table = table;
+	}
+
+	public Key getMyKey() {
+		return myKey;
+	}
+
+	public void setMyKey(final Key myKey) {
+		this.myKey = myKey;
 	}
 }

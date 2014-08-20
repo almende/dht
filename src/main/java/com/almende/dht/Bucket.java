@@ -15,8 +15,11 @@ import java.util.logging.Logger;
 public class Bucket {
 	private static final Logger LOG = Logger.getLogger(Bucket.class.getName());
 
-	private LinkedHashMap<Key, Node> nodes = new LinkedHashMap<Key, Node>(
-			Constants.K);
+	private LinkedHashMap<Key, Node> nodes;
+
+	public Bucket() {
+		nodes = new LinkedHashMap<Key, Node>(Constants.K);
+	};
 
 	public void seenNode(final Node node) {
 		synchronized (nodes) {
@@ -66,5 +69,13 @@ public class Bucket {
 	public Node[] getClosestNodes(final Key near) {
 		return getClosestNodes(near, Integer.MAX_VALUE,
 				Collections.<Key> emptySet());
+	}
+
+	public LinkedHashMap<Key, Node> getNodes() {
+		return nodes;
+	}
+
+	public void setNodes(LinkedHashMap<Key, Node> nodes) {
+		this.nodes = nodes;
 	}
 }
