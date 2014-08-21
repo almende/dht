@@ -8,14 +8,17 @@ package com.almende.dht;
  * The Class Constants.
  */
 public class Constants {
-	
+
 	/** The Constant BITLENGTH. */
-	public static final int BITLENGTH = 160;
-	
+	public static final int		BITLENGTH	= 160;
+
 	/** The Constant K. */
-	public static final int K = 20;
-	
+	public static final int		K			= 20;
+
 	/** The Constant A. */
-	public static final int A = 3;
-	
+	public static final int		A			= 3;
+
+	/** The Constant EXPIRE. */
+	public static final long	EXPIRE		= 24 * 60 * 60 * 1000;
+
 }
