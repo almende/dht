@@ -4,8 +4,10 @@
  */
 package com.almende.test.dht;
 
+import com.almende.dht.Node;
 import com.almende.dht.rpc.DHT;
 import com.almende.eve.agent.Agent;
+import com.almende.eve.agent.AgentConfig;
 import com.almende.eve.transform.rpc.annotation.Namespace;
 
 /**
@@ -13,10 +15,27 @@ import com.almende.eve.transform.rpc.annotation.Namespace;
  */
 public class DHTAgent extends Agent {
 	//TODO: make DHT a capability
-	private DHT dht = new DHT();
+	private DHT dht = new DHT(caller);
 	
 	/**
-	 * Gets the dht.
+	 * Instantiates a new DHT agent.
+	 */
+	public DHTAgent(){
+		super();
+	}
+	
+	/**
+	 * Instantiates a new DHT agent.
+	 *
+	 * @param id
+	 *            the id
+	 */
+	public DHTAgent(final String id){
+		super(new AgentConfig(id));
+	}
+	
+	/**
+	 * Gets the DHT endpoint.
 	 *
 	 * @return the dht
 	 */
@@ -25,5 +44,15 @@ public class DHTAgent extends Agent {
 		return dht;
 	}
 	
-	
+	/**
+	 * return the node description of this DHT node.
+	 *
+	 * @return the node
+	 */
+	public Node asNode(){
+		final Node result = new Node();
+		result.setKey(dht.getKey());
+		result.setUri(this.getUrls().get(this.getUrls().size()-1));
+		return result;
+	}
 }

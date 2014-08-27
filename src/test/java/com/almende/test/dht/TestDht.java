@@ -18,7 +18,7 @@ import com.almende.dht.Constants;
 import com.almende.dht.Key;
 import com.almende.dht.Node;
 import com.almende.dht.RoutingTable;
-import com.almende.dht.jackson.JOM;
+import com.almende.util.jackson.JOM;
 
 /**
  * The Class TestRpc.
@@ -170,15 +170,16 @@ public class TestDht extends TestCase {
 	 */
 	@Test
 	public void testBuckets() {
-		Bucket bucket = new Bucket();
-		final Node test = new Node(Key.random(), TESTURI);
+		Bucket bucket = new Bucket(10);
+		final Node test = new Node(Key.random(10), TESTURI);
 		bucket.seenNode(test);
+		
 		assertEquals("getClosestNodes didn't return node", 1,
-				bucket.getClosestNodes(new Key()).length);
+				bucket.getClosestNodes(new Key()).size());
 		assertEquals("getClosestNodes didn't return same node", test,
-				bucket.getClosestNodes(new Key())[0]);
+				bucket.getClosestNodes(new Key()).get(0));
 
-		bucket = new Bucket();
+		bucket = new Bucket(-1);
 		final Node test1 = new Node(Key.fromHexString("01"), TESTURI);
 		final Node test2 = new Node(Key.fromHexString("02"), TESTURI);
 		final Node test3 = new Node(Key.fromHexString("03"), TESTURI);
@@ -196,37 +197,37 @@ public class TestDht extends TestCase {
 		bucket.seenNode(test7);
 
 		assertEquals("Incorrect order 0", test7,
-				bucket.getClosestNodes(Key.fromHexString("0F"), 1)[0]);
+				bucket.getClosestNodes(Key.fromHexString("0F"), 1).get(0));
 
 		bucket.seenNode(test8);
 
 		assertEquals("Incorrect order 1", test1,
-				bucket.getClosestNodes(new Key(), 1)[0]);
+				bucket.getClosestNodes(new Key(), 1).get(0));
 		assertEquals("Incorrect order 2", test2,
-				bucket.getClosestNodes(new Key(), 2)[1]);
+				bucket.getClosestNodes(new Key(), 2).get(1));
 		assertEquals("Incorrect order 3", test1,
-				bucket.getClosestNodes(Key.fromHexString("10"), 1)[0]);
+				bucket.getClosestNodes(Key.fromHexString("10"), 1).get(0));
 		assertEquals("Incorrect order 4", test5,
-				bucket.getClosestNodes(Key.fromHexString("04"), 2)[1]);
+				bucket.getClosestNodes(Key.fromHexString("04"), 2).get(1));
 		assertEquals("Incorrect order 5", test3,
-				bucket.getClosestNodes(Key.fromHexString("04"))[6]);
+				bucket.getClosestNodes(Key.fromHexString("04")).get(6));
 		assertEquals("Incorrect order 6", test8,
-				bucket.getClosestNodes(Key.fromHexString("04"))[7]);
+				bucket.getClosestNodes(Key.fromHexString("04")).get(7));
 		assertEquals("Incorrect order 7", test6,
-				bucket.getClosestNodes(Key.fromHexString("07"), 2)[1]);
+				bucket.getClosestNodes(Key.fromHexString("07"), 2).get(1));
 
 		assertEquals("Limit doesn't work", 3,
-				bucket.getClosestNodes(new Key(), 3).length);
+				bucket.getClosestNodes(new Key(), 3).size());
 		assertEquals("Too large result", 8,
-				bucket.getClosestNodes(new Key(), 10).length);
+				bucket.getClosestNodes(new Key(), 10).size());
 
 		assertEquals("Filter not working 1", test2, bucket.getClosestNodes(
-				new Key(), 1, new Key[] { test1.getKey() })[0]);
+				new Key(), 1, new Key[] { test1.getKey() }).get(0));
 		assertEquals(
 				"Filter not working 2",
 				test6,
 				bucket.getClosestNodes(new Key(), 3, new Key[] {
-						test1.getKey(), test3.getKey(), test5.getKey() })[2]);
+						test1.getKey(), test3.getKey(), test5.getKey() }).get(2));
 	}
 
 	/**
@@ -245,14 +246,14 @@ public class TestDht extends TestCase {
 
 		final Bucket bucket = rt.getBucket(Key.fromHexString("0C"));
 		assertEquals("Wrong node in bucket 1", Key.fromHexString("0D"),
-				bucket.getClosestNodes(Key.fromHexString("0F"), 1)[0].getKey());
+				bucket.getClosestNodes(Key.fromHexString("0F"), 1).get(0).getKey());
 
 		assertEquals("Wrong result length 1", 3,
-				rt.getClosestNodes(Key.fromHexString("0F"), 3).length);
+				rt.getClosestNodes(Key.fromHexString("0F"), 3).size());
 		assertEquals("Wrong result length 2", 2,
-				rt.getClosestNodes(Key.fromHexString("0F"), 2).length);
+				rt.getClosestNodes(Key.fromHexString("0F"), 2).size());
 		assertEquals("Wrong result length 3", 4,
-				rt.getClosestNodes(Key.fromHexString("05"), 10).length);
+				rt.getClosestNodes(Key.fromHexString("05"), 10).size());
 
 		// Test serialization to JSON:
 		final String json = JOM.getInstance().writeValueAsString(rt);
@@ -262,19 +263,16 @@ public class TestDht extends TestCase {
 		assertEquals("Routing table key incorrect", Key.fromHexString("04"),
 				rt2.getMyKey());
 
-		final String json2 = JOM.getInstance().writeValueAsString(rt2);
-		assertEquals("json different", json, json2);
-
 		final Bucket bucket2 = rt2.getBucket(Key.fromHexString("0C"));
 		assertEquals("Wrong node in bucket 2", Key.fromHexString("0D"),
-				bucket2.getClosestNodes(Key.fromHexString("0F"), 1)[0].getKey());
+				bucket2.getClosestNodes(Key.fromHexString("0F"), 1).get(0).getKey());
 
 		assertEquals("Wrong result length 4", 3,
-				rt2.getClosestNodes(Key.fromHexString("0F"), 3).length);
+				rt2.getClosestNodes(Key.fromHexString("0F"), 3).size());
 		assertEquals("Wrong result length 5", 2,
-				rt2.getClosestNodes(Key.fromHexString("0F"), 2).length);
+				rt2.getClosestNodes(Key.fromHexString("0F"), 2).size());
 		assertEquals("Wrong result length 6", 4,
-				rt2.getClosestNodes(Key.fromHexString("05"), 10).length);
+				rt2.getClosestNodes(Key.fromHexString("05"), 10).size());
 
 	}
 }

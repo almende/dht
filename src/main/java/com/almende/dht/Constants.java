@@ -16,9 +16,12 @@ public class Constants {
 	public static final int		K			= 20;
 
 	/** The Constant A. */
-	public static final int		A			= 3;
+	public static final int		A			= 5;
 
 	/** The Constant EXPIRE. */
-	public static final long	EXPIRE		= 24 * 60 * 60 * 1000;
+	public static final long	EXPIRE		= 24 * 60 * 60 * 1000 + ((int)Math.floor(Math.random()*1000));
+
+	/** The Constant REFRESH. */
+	public static final long	REFRESH		= 60 * 60 * 1000 - ((int)Math.floor(Math.random()*1000));
 
 }

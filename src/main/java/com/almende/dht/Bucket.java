@@ -5,32 +5,91 @@
 package com.almende.dht;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * The Class Bucket.
  */
 public class Bucket {
-	private static final Logger LOG = Logger.getLogger(Bucket.class.getName());
+//	private static final Logger	LOG	= Logger.getLogger(Bucket.class.getName());
 
-	private LinkedHashMap<Key, Node> nodes;
+	private class Meta {
+		private long	lastUpdate	= 0;
+		private int		rank = 0;
+
+		public Meta(){}
+		
+		/**
+		 * Gets the last update.
+		 *
+		 * @return the last update
+		 */
+		@JsonIgnore
+		public long getLastUpdate() {
+			return lastUpdate;
+		}
+		
+		/**
+		 * Sets the last update.
+		 *
+		 * @param lastUpdate
+		 *            the new last update
+		 */
+		public void setLastUpdate(long lastUpdate) {
+			this.lastUpdate = lastUpdate;
+		}
+
+		/**
+		 * Gets the rank.
+		 *
+		 * @return the rank
+		 */
+		public int getRank() {
+			return rank;
+		}
+
+		/**
+		 * Sets the rank.
+		 *
+		 * @param rank
+		 *            the new rank
+		 */
+		public void setRank(int rank) {
+			this.rank = rank;
+		}
+		
+	}
+
+	private Meta						meta	= new Meta();
+	private LinkedHashMap<Key, Node>	nodes;
 
 	/**
 	 * Instantiates a new bucket.
 	 */
-	public Bucket() {
-		nodes = new LinkedHashMap<Key, Node>(Constants.K);
+	public Bucket(){};
+	
+	/**
+	 * Instantiates a new bucket.
+	 *
+	 * @param rank
+	 *            the rank
+	 */
+	public Bucket(final int rank) {
+		this.meta.setRank(rank);
+		this.nodes = new LinkedHashMap<Key, Node>(Constants.K,(float) 0.75,true);
 	};
 
+	
 	/**
 	 * Seen node.
 	 *
@@ -48,9 +107,19 @@ public class Bucket {
 				// get first Node through iterator, do Ping(), wait, on answer
 				// within timeout drop key; else drop first Node, recurse
 				// seenNode();
-				LOG.log(Level.WARNING, "Still not implemented!",
+//				LOG.warning("Bucket full:"+this.meta.rank+ " dropping oldest (not yet doing ping)");
+				synchronized (nodes) {
+					Iterator<Entry<Key, Node>> iter = nodes.entrySet().iterator();
+					iter.next();
+					iter.remove();
+					nodes.put(node.getKey(), node);
+				}
+				
+/*				LOG.log(Level.WARNING, "Still not implemented!",
 						new NoSuchElementException());
+*/
 			}
+			meta.setLastUpdate(System.currentTimeMillis());
 		}
 	}
 
@@ -65,8 +134,8 @@ public class Bucket {
 	 *            the filter
 	 * @return the closest nodes
 	 */
-	public Node[] getClosestNodes(final Key near, final int limit,
-			final Set<Key> filter) {
+	public List<Node> getClosestNodes(final Key near, final int limit,
+			final Collection<Key> filter) {
 		synchronized (nodes) {
 			final TreeMap<Key, Node> distMap = new TreeMap<Key, Node>();
 			final Iterator<Entry<Key, Node>> iter = nodes.entrySet().iterator();
@@ -78,7 +147,7 @@ public class Bucket {
 				distMap.put(near.dist(entry.getKey()), entry.getValue());
 			}
 			final Node[] values = distMap.values().toArray(new Node[0]);
-			return Arrays.copyOf(values, Math.min(limit, distMap.size()));
+			return Arrays.asList(Arrays.copyOf(values, Math.min(limit, distMap.size())));
 		}
 	}
 
@@ -93,7 +162,7 @@ public class Bucket {
 	 *            the filter
 	 * @return the closest nodes
 	 */
-	public Node[] getClosestNodes(final Key near, final int limit,
+	public List<Node> getClosestNodes(final Key near, final int limit,
 			final Key[] filter) {
 		final Set<Key> set = new HashSet<Key>(filter.length);
 		Collections.addAll(set, filter);
@@ -109,7 +178,7 @@ public class Bucket {
 	 *            the limit
 	 * @return the closest nodes
 	 */
-	public Node[] getClosestNodes(final Key near, final int limit) {
+	public List<Node> getClosestNodes(final Key near, final int limit) {
 		return getClosestNodes(near, limit, Collections.<Key> emptySet());
 	}
 
@@ -120,11 +189,65 @@ public class Bucket {
 	 *            the near
 	 * @return the closest nodes
 	 */
-	public Node[] getClosestNodes(final Key near) {
+	public List<Node> getClosestNodes(final Key near) {
 		return getClosestNodes(near, Integer.MAX_VALUE,
 				Collections.<Key> emptySet());
 	}
 
+	/**
+	 * Checks if is stale.
+	 *
+	 * @return true, if is stale
+	 */
+	@JsonIgnore
+	public boolean isStale(){
+		final long due = System.currentTimeMillis()-Constants.REFRESH;
+		return meta.getLastUpdate()<due;
+	}
+	
+	/**
+	 * Size.
+	 *
+	 * @return the int
+	 */
+	@JsonIgnore
+	public int size(){
+		return nodes.size();
+	}
+	
+	/**
+	 * Gets the random key.
+	 *
+	 * @return the random key
+	 */
+	@JsonIgnore
+	public Key getRandomKey(){
+		if (this.meta.getRank() == -1){
+			return Key.random();
+		} else {
+			return Key.random(this.meta.getRank());
+		}
+	}
+	
+	/**
+	 * Gets the meta.
+	 *
+	 * @return the meta
+	 */
+	public Meta getMeta() {
+		return meta;
+	}
+
+	/**
+	 * Sets the meta.
+	 *
+	 * @param meta
+	 *            the new meta
+	 */
+	public void setMeta(Meta meta) {
+		this.meta = meta;
+	}
+	
 	/**
 	 * Gets the nodes.
 	 *
@@ -143,4 +266,5 @@ public class Bucket {
 	public void setNodes(LinkedHashMap<Key, Node> nodes) {
 		this.nodes = nodes;
 	}
+	
 }
