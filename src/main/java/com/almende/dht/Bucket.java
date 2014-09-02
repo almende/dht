@@ -114,10 +114,6 @@ public class Bucket {
 					iter.remove();
 					nodes.put(node.getKey(), node);
 				}
-				
-/*				LOG.log(Level.WARNING, "Still not implemented!",
-						new NoSuchElementException());
-*/
 			}
 			meta.setLastUpdate(System.currentTimeMillis());
 		}

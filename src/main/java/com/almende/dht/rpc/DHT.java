@@ -35,6 +35,7 @@ import com.almende.eve.transport.Caller;
 import com.almende.util.TypeUtil;
 import com.almende.util.callback.AsyncCallback;
 import com.almende.util.jackson.JOM;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -192,50 +193,28 @@ public class DHT {
 	}
 
 	/**
-	 * Find_value get latest value.
+	 * Find_value, optionally get all values for key.
 	 *
 	 * @param key
 	 *            the key
 	 * @param remote
 	 *            the remote
+	 * @param multiple
+	 *            Request all values or just the newest?
 	 * @param sender
 	 *            the sender
 	 * @return And objectNode containing either: {"value":....} or
 	 *         {"nodes":[....]}
 	 */
 	@Access(AccessType.PUBLIC)
-	public ObjectNode find_value(@Name("key") Key key, @Name("me") Key remote,
-			@Sender String sender) {
-		rt.seenNode(new Node(remote, URI.create(sender)));
-		if (values.containsKey(key)) {
-			final ObjectNode result = JOM.createObjectNode();
-			result.set("value", values.get(key).iterator().next().getValue());
-			return result;
-		} else {
-			return loc_find_close_nodes(key);
-		}
-	}
-
-	/**
-	 * Find_values get all values for key.
-	 *
-	 * @param key
-	 *            the key
-	 * @param remote
-	 *            the remote
-	 * @param sender
-	 *            the sender
-	 * @return And objectNode containing either: {"value":....} or
-	 *         {"nodes":[....]}
-	 */
-	@Access(AccessType.PUBLIC)
-	public ObjectNode find_values(@Name("key") Key key, @Name("me") Key remote,
+	public ObjectNode find_value(@Name("key") Key key, @Name("me") Key remote, @Name("multiple") Boolean multiple,
 			@Sender String sender) {
 		rt.seenNode(new Node(remote, URI.create(sender)));
 		if (values.containsKey(key)) {
 			final ObjectNode result = JOM.createObjectNode();
 			final ArrayNode arr = JOM.createArrayNode();
 			final Set<TimedValue> current = values.get(key);
+			
 			final int size = current.size();
 			final Iterator<TimedValue> iter = values.get(key).iterator();
 			while (iter.hasNext()) {
@@ -249,7 +228,11 @@ public class DHT {
 			if (current.size() < size) {
 				values.put(key, current);
 			}
-			result.set("values", arr);
+			if (multiple){
+				result.set("values", arr);
+			} else {
+				result.set("value", arr.get(0));
+			}
 			return result;
 		} else {
 			return loc_find_close_nodes(key);
@@ -387,13 +370,128 @@ public class DHT {
 	 *
 	 * @param key
 	 *            the key
+	 * @param multiple
+	 *            the multiple
 	 * @return the object node
 	 */
-	public ObjectNode iterative_find_value(Key key) {
+	public JsonNode iterative_find_value(final Key key, final boolean multiple) {
+		final JsonNode[] result = new JsonNode[1];
+		
+		final TreeMap<Key, Node> shortList = new TreeMap<Key, Node>();
+		final Set<Node> tried = new HashSet<Node>();
 
-		return JOM.createObjectNode();
+		insert(shortList, key, rt.getClosestNodes(key, Constants.A));
+		final int[] noInFlight = new int[1];
+		noInFlight[0] = 0;
+		boolean keepGoing = true;
+		while (keepGoing) {
+			while (noInFlight[0] > 0 && result[0] == null) {
+				synchronized (shortList) {
+					try {
+						shortList.wait(100);
+					} catch (InterruptedException e) {}
+				}
+			}
+
+			List<Node> copy = Arrays.asList(shortList.values().toArray(
+					new Node[0]));
+			Collections.sort(copy);
+			final Iterator<Node> iter = copy.iterator();
+			int count = 0;
+			while (iter.hasNext() && count < Constants.A) {
+				final Node next = iter.next();
+				if (tried.contains(next)) {
+					continue;
+				}
+				count++;
+				tried.add(next);
+				try {
+					ObjectNode params = JOM.createObjectNode();
+					params.set("me",
+							JOM.getInstance().valueToTree(rt.getMyKey()));
+					params.set("key", JOM.getInstance().valueToTree(key));
+					params.put("multiple", multiple);
+
+					AsyncCallback<ObjectNode> callback = new AsyncCallback<ObjectNode>() {
+
+						@Override
+						public void onSuccess(ObjectNode res) {
+							if (res.has("value")){
+								result[0]=(ObjectNode) res.get("value");
+							} else if (res.has("values")){
+								result[0]=(ArrayNode) res.get("values");
+							} else {
+								List<Node> nodes = NODELIST.inject(res
+									.get("nodes"));
+								synchronized (shortList) {
+									insert(shortList, key, nodes);
+								}				
+							}
+							rt.seenNode(next);
+							synchronized(shortList){
+								noInFlight[0]--;
+								shortList.notifyAll();
+							}
+						}
+
+						@Override
+						public void onFailure(Exception exception) {
+							synchronized (shortList) {
+								shortList.remove(key.dist(next.getKey()));
+								noInFlight[0]--;
+								shortList.notifyAll();
+								LOG.log(Level.WARNING, noInFlight[0]
+										+ ":OnFailure called:" + next.getUri(),
+										exception);
+							}
+						}
+
+					};
+					caller.call(next.getUri(), "dht.find_value", params,
+							callback);
+					synchronized (shortList) {
+						noInFlight[0]++;
+					}
+				} catch (IOException e) {
+					synchronized (shortList) {
+						shortList.remove(key.dist(next.getKey()));
+					}
+					continue;
+				}
+			}
+			if (count == 0) {
+				keepGoing = false;
+			}
+		}
+		if (result[0] == null){
+			return JOM.createNullNode();
+		} else {
+			return result[0];
+		}
 	}
 
+	/**
+	 * Iterative_store_value.
+	 *
+	 * @param key
+	 *            the key
+	 * @param value
+	 *            the value
+	 * @throws IOException
+	 *             Signals that an I/O exception has occurred.
+	 */
+	public void iterative_store_value(final Key key, final ObjectNode value) throws IOException{
+		List<Node> nodes = iterative_node_lookup(key);
+		for (final Node node: nodes){
+			final ObjectNode params = JOM.createObjectNode();
+			params.set("me",
+					JOM.getInstance().valueToTree(rt.getMyKey()));
+			params.set("key", JOM.getInstance().valueToTree(key));
+			params.set("value",value);
+			caller.call(node.getUri(), "dht.store", params);
+		}
+	}
+	
 	/**
 	 * Join the network
 	 *
@@ -436,6 +534,15 @@ public class DHT {
 	@Override
 	public String toString() {
 		return rt.toString();
+	}
+	
+	/**
+	 * Checks for values.
+	 *
+	 * @return true, if successful
+	 */
+	public boolean hasValues(){
+		return values.size()>0;
 	}
 
 }

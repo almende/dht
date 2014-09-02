@@ -6,17 +6,23 @@ package com.almende.test.dht;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.BitSet;
 
 import junit.framework.TestCase;
 
 import org.junit.Test;
+
+import com.almende.dht.Key;
+import com.almende.util.jackson.JOM;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * The Class TestAgent.
  */
 public class TestScale extends TestCase {
 
-	private static final int	NOFNODES	= 1000;
+	private static final int	NOFNODES	= 200;
 
 	/**
 	 * Test a large nof nodes.
@@ -46,6 +52,54 @@ public class TestScale extends TestCase {
 			}
 			agent = next;
 			agents[i] = agent;
+		}
+		final Key key = Key.fromString("Hello world");
+		final ObjectNode value = JOM.createObjectNode();
+		value.put("Hello:","world!");
+		agents[0].getDht().iterative_store_value(key,value);
+		
+		JsonNode result = agents[(int) Math.floor(Math.random()*NOFNODES)].getDht().iterative_find_value(Key.fromString("Hello world"), false);
+		
+		assertEquals(result,value);
+		
+		final int otherIdx =(int) Math.floor(Math.random()*NOFNODES); 
+		JsonNode result2 = agents[otherIdx].getDht().iterative_find_value(Key.fromString("Hello world"), false);
+		assertEquals(result2,value);
+
+		final Key key2 = Key.fromString("Some other key");
+		final ObjectNode value2 = JOM.createObjectNode();
+		value2.put("Hello:","world2!");
+		agents[0].getDht().iterative_store_value(key2,value2);
+		
+		JsonNode result3 = agents[(int) Math.floor(Math.random()*NOFNODES)].getDht().iterative_find_value(Key.fromString("Some other key"), false);
+		
+		assertEquals(result3,value2);
+		
+		JsonNode result4 = agents[otherIdx].getDht().iterative_find_value(Key.fromString("Hello world"), false);
+		assertNotSame(result4,value2);
+		assertEquals(result4,value);
+
+		JsonNode result5 = agents[otherIdx].getDht().iterative_find_value(Key.fromString("Hello world"), false);
+		assertEquals(result5,value);
+		JsonNode result6 = agents[otherIdx].getDht().iterative_find_value(Key.fromString("Hello world!"), false);
+		assertNotSame(result6,value);
+		assertEquals(result6,JOM.createNullNode());
+		
+		final BitSet set = key2.getVal();
+		set.set(10,!set.get(10));
+		final Key key3 = new Key(set);
+		final ObjectNode value3 = JOM.createObjectNode();
+		value3.put("Hello:","world3!");
+		agents[0].getDht().iterative_store_value(key3,value3);
+		
+		JsonNode result7 = agents[otherIdx+2].getDht().iterative_find_value(key3, false);
+		assertEquals(result7,value3);
+		
+		
+		for (final DHTAgent a: agents){
+			if (a.getDht().hasValues()){
+				System.out.println(a.getId()+ " has stored a value.");
+			}
 		}
 	}
 }
