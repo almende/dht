@@ -54,7 +54,7 @@ public class DHT {
 	private Map<Key, Set<TimedValue>>			values		= new HashMap<Key, Set<TimedValue>>();
 	private Caller								caller		= null;
 	private static final TypeUtil<List<Node>>	NODELIST	= new TypeUtil<List<Node>>() {};
-
+	
 	/**
 	 * Instantiates a new dht.
 	 *
@@ -516,10 +516,12 @@ public class DHT {
 		}
 	}
 
+	// TODO: Schedule Node expiry
+	// TODO: Schedule Value expiry
+	// TODO: Schedule expiry
 	/**
 	 * Refresh buckets (scheduled regularly)
 	 */
-	// TODO: Schedule expiry
 	@Access(AccessType.PUBLIC)
 	public void refresh() {
 		List<Bucket> buckets = rt.getStaleBuckets();
@@ -528,14 +530,11 @@ public class DHT {
 		}
 	}
 
-	// TODO: Schedule Node expiry
-	// TODO: Schedule Value expiry
-
 	@Override
 	public String toString() {
 		return rt.toString();
 	}
-	
+
 	/**
 	 * Checks for values.
 	 *

@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public class TestScale extends TestCase {
 
-	private static final int	NOFNODES	= 200;
+	private static final int	NOFNODES	= 1000;
 
 	/**
 	 * Test a large nof nodes.
@@ -42,7 +42,7 @@ public class TestScale extends TestCase {
 		DHTAgent agent = new DHTAgent("agent_0");
 		agents[0] = agent;
 		for (int i = 1; i < NOFNODES; i++) {
-			System.out.println("Created node:agent_"+i);
+			System.out.print("Created node:agent_"+i+"\r");
 			DHTAgent next = new DHTAgent("agent_" + i);
 			try {
 				next.getDht().join(agent.asNode());
@@ -95,11 +95,12 @@ public class TestScale extends TestCase {
 		JsonNode result7 = agents[otherIdx+2].getDht().iterative_find_value(key3, false);
 		assertEquals(result7,value3);
 		
-		
+		int count=0;
 		for (final DHTAgent a: agents){
 			if (a.getDht().hasValues()){
-				System.out.println(a.getId()+ " has stored a value.");
+				count++;
 			}
 		}
+		System.out.println(count + " agents have some value stored.");
 	}
 }

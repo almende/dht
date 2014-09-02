@@ -14,7 +14,6 @@ import com.almende.eve.transform.rpc.annotation.Namespace;
  * The Class DHTAgent.
  */
 public class DHTAgent extends Agent {
-	//TODO: make DHT a capability
 	private DHT dht = new DHT(caller);
 	
 	/**
