@@ -84,7 +84,7 @@ public class TimedValue implements Comparable<TimedValue> {
 	 * @param expirationDuration
 	 *            the new expiration duration
 	 */
-	public void setExpirationDuration(long expirationDuration) {
+	public void setExpirationDuration(final long expirationDuration) {
 		this.expirationDuration = expirationDuration;
 	}
 
@@ -93,10 +93,22 @@ public class TimedValue implements Comparable<TimedValue> {
 	 *
 	 * @param value
 	 *            the new value
+	 * @param storedTime
+	 *            the stored time (needed to be able to use Hypertime)
 	 */
-	public void store(ObjectNode value) {
-		this.storedTime = System.currentTimeMillis();
+	public void store(final ObjectNode value, final long storedTime) {
+		this.storedTime = storedTime;
 		this.value = value;
+	}
+	
+	/**
+	 * Store.
+	 *
+	 * @param value
+	 *            the value
+	 */
+	public void store(final ObjectNode value){
+		store(value,System.currentTimeMillis());
 	}
 	
 	/**
